@@ -1,0 +1,260 @@
+openapi: 3.0.0
+info:
+  title: 🛍️ Shopping Online API
+  description: API để quản lý và lấy dữ liệu sản phẩm bán hàng online
+  version: 1.0.0
+  contact:
+    name: Admin Team
+
+servers:
+  - url: http://localhost:3000
+    description: 🚀 Development Server
+
+paths:
+  /api/products:
+    get:
+      summary: 📦 Lấy tất cả sản phẩm
+      description: Trả về danh sách tất cả các sản phẩm (không giới hạn)
+      tags:
+        - 📦 Quản lý Sản phẩm (Admin)
+      responses:
+        '200':
+          description: ✅ Danh sách tất cả sản phẩm
+        '500':
+          description: ❌ Lỗi server
+
+    post:
+      summary: Thêm mới sản phẩm
+      description: Tạo một sản phẩm mới trong cơ sở dữ liệu
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Sản phẩm được tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Dữ liệu không hợp lệ
+        '500':
+          description: Lỗi server
+
+  /api/products/{id}:
+    put:
+      summary: Cập nhật sản phẩm
+      description: Cập nhật thông tin của một sản phẩm hiện có
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của sản phẩm cần cập nhật
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Sản phẩm được cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Dữ liệu không hợp lệ
+        '404':
+          description: Sản phẩm không tìm thấy
+        '500':
+          description: Lỗi server
+    delete:
+      summary: Xóa sản phẩm
+      description: Xóa một sản phẩm khỏi cơ sở dữ liệu theo ID
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của sản phẩm cần xóa (MongoDB ObjectId)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sản phẩm được xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  product:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Sản phẩm không tìm thấy
+        '500':
+          description: Lỗi server
+
+  /api/customer/categories:
+    get:
+      summary: 🏷️ Lấy danh sách danh mục
+      description: Trả về danh sách tất cả các danh mục sản phẩm
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      responses:
+        '200':
+          description: ✅ Danh sách danh mục
+        '500':
+          description: ❌ Lỗi server
+
+  /api/customer/products/new:
+    get:
+      summary: ⭐ Lấy 3 sản phẩm mới nhất
+      description: Trả về danh sách 3 sản phẩm mới nhất được tạo
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      responses:
+        '200':
+          description: ✅ Danh sách sản phẩm mới nhất
+        '500':
+          description: ❌ Lỗi server
+
+  /api/customer/products/hot:
+    get:
+      summary: 🔥 Lấy 3 sản phẩm bán chạy nhất
+      description: Trả về danh sách 3 sản phẩm bán chạy nhất dựa trên số lượng đã bán
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      responses:
+        '200':
+          description: ✅ Danh sách sản phẩm bán chạy
+        '500':
+          description: ❌ Lỗi server
+
+  /api/customer/products/category/{cid}:
+    get:
+      summary: 📂 Lấy sản phẩm theo danh mục
+      description: Trả về danh sách sản phẩm thuộc một danh mục cụ thể
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          description: ID của danh mục (Category ID)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ✅ Danh sách sản phẩm theo danh mục
+        '500':
+          description: ❌ Lỗi server
+
+  /api/customer/products/search/{keyword}:
+    get:
+      summary: 🔍 Tìm kiếm sản phẩm
+      description: Tìm kiếm sản phẩm theo từ khóa (tên sản phẩm)
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      parameters:
+        - name: keyword
+          in: path
+          required: true
+          description: Từ khóa tìm kiếm
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ✅ Danh sách sản phẩm tìm được
+        '500':
+          description: ❌ Lỗi server
+
+  /api/customer/products/{id}:
+    get:
+      tags:
+        - 👥 Lấy dữ liệu (Khách hàng)
+      summary: Lấy sản phẩm theo ID
+      description: API để lấy thông tin chi tiết của một sản phẩm dựa trên ID.
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của sản phẩm cần lấy thông tin.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thông tin chi tiết của sản phẩm.
+        '404':
+          description: Không tìm thấy sản phẩm.
+        '500':
+          description: Lỗi máy chủ.
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - price
+        - imageUrl
+      properties:
+        id:
+          type: string
+          description: ID sản phẩm (MongoDB ObjectId)
+        name:
+          type: string
+          description: Tên sản phẩm
+        description:
+          type: string
+          description: Mô tả sản phẩm
+        price:
+          type: number
+          description: Giá sản phẩm (VNĐ)
+        imageUrl:
+          type: string
+          format: uri
+          description: URL ảnh sản phẩm
+
+    ProductInput:
+      type: object
+      required:
+        - name
+        - description
+        - price
+        - imageUrl
+      properties:
+        name:
+          type: string
+          description: Tên sản phẩm
+        description:
+          type: string
+          description: Mô tả sản phẩm
+        price:
+          type: number
+          description: Giá sản phẩm (VNĐ)
+        imageUrl:
+          type: string
+          format: uri
+          description: URL ảnh sản phẩm
+
+tags:
+  - name: 👥 Lấy dữ liệu (Khách hàng)
+    description: API để lấy danh mục, sản phẩm mới, sản phẩm bán chạy
+  - name: 📦 Quản lý Sản phẩm (Admin)
+    description: API CRUD - Tạo, lấy, sửa, xóa sản phẩm
