@@ -2,11 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 // utils
+const EmailUtil = require('../utils/EmailUtil');
 const JwtUtil = require('../utils/JwtUtil');
 
 // daos
 const AdminDAO = require('../models/AdminDAO');
 const CategoryDAO = require('../models/CategoryDAO');
+const CustomerDAO = require('../models/CustomerDAO');
+const OrderDAO = require('../models/OrderDAO');
 const ProductDAO = require('../models/ProductDAO');
 // login
 router.post('/login', async function (req, res) {
@@ -129,5 +132,97 @@ router.delete('/products/:id', JwtUtil.checkToken, async function (req, res) {
   const result = await ProductDAO.delete(_id);
   res.json(result);
 });
+
+// order
+router.get('/orders', JwtUtil.checkToken, async function (req, res) {
+  const orders = await OrderDAO.selectAll();
+  res.json(orders);
+});
+router.get(
+  '/orders/customer/:cid',
+  JwtUtil.checkToken,
+  async function (req, res) {
+    const _cid = req.params.cid;
+    const orders = await OrderDAO.selectByCustID(_cid);
+    res.json(orders);
+  }
+);
+router.put('/orders/status/:id', JwtUtil.checkToken, async function (req, res) {
+  const _id = req.params.id;
+  const newStatus = req.body.status;
+  const allowStatuses = ['PENDING', 'APPROVED', 'CANCELED'];
+
+  if (!allowStatuses.includes(newStatus)) {
+    res.json(null);
+    return;
+  }
+
+  const result = await OrderDAO.update(_id, newStatus);
+  res.json(result);
+});
+
+// customer
+router.get('/customers', JwtUtil.checkToken, async function (req, res) {
+  const customers = await CustomerDAO.selectAll();
+  res.json(customers);
+});
+router.put(
+  '/customers/deactive/:id',
+  JwtUtil.checkToken,
+  async function (req, res) {
+    const _id = req.params.id;
+    const token = req.body.token;
+    const result = await CustomerDAO.active(_id, token, 0);
+    res.json(result);
+  }
+);
+router.get(
+  '/customers/sendmail/:id',
+  JwtUtil.checkToken,
+  async function (req, res) {
+    const _id = req.params.id;
+    const cust = await CustomerDAO.selectByID(_id);
+
+    if (!cust) {
+      res.json({ success: false, message: 'Not exists customer' });
+      return;
+    }
+
+    try {
+      const sent = await EmailUtil.send(cust.email, cust._id, cust.token);
+
+      if (sent) {
+        res.json({ success: true, message: 'Please check email' });
+      } else {
+        res.json({ success: false, message: 'Email failure' });
+      }
+    } catch (err) {
+      if (
+        err.message === 'Email is not configured' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        res.json({
+          success: true,
+          message: 'Please check email',
+          preview: {
+            email: cust.email,
+            id: cust._id,
+            token: cust.token,
+            note: 'Email not configured, simulated success in development',
+          },
+        });
+        return;
+      }
+
+      res.json({
+        success: false,
+        message:
+          err.message === 'Email is not configured'
+            ? 'Email failure: configure EMAIL_SERVICE, EMAIL_USER, and EMAIL_PASS'
+            : 'Email failure',
+      });
+    }
+  }
+);
 
 module.exports = router;

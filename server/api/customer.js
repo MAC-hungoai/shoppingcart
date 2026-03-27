@@ -9,6 +9,7 @@ const JwtUtil = require('../utils/JwtUtil');
 // daos
 const CategoryDAO = require('../models/CategoryDAO');
 const CustomerDAO = require('../models/CustomerDAO');
+const OrderDAO = require('../models/OrderDAO');
 const ProductDAO = require('../models/ProductDAO');
 
 // customer
@@ -164,6 +165,65 @@ router.put('/customers/:id', JwtUtil.checkToken, async function (req, res) {
 
   const result = await CustomerDAO.update(customer);
   res.json(result);
+});
+
+// mycart
+router.post('/checkout', JwtUtil.checkToken, async function (req, res) {
+  const authCustomer = await CustomerDAO.selectByUsernameAndPassword(
+    req.decoded.username,
+    req.decoded.password,
+  );
+  const items = Array.isArray(req.body.items) ? req.body.items : [];
+
+  if (!authCustomer) {
+    res.json({
+      success: false,
+      message: 'Customer not found',
+    });
+    return;
+  }
+
+  if (items.length === 0) {
+    res.json({
+      success: false,
+      message: 'Your cart is empty',
+    });
+    return;
+  }
+
+  const total = items.reduce((sum, item) => {
+    return sum + Number(item.product.price) * Number(item.quantity);
+  }, 0);
+  const now = new Date().getTime(); // milliseconds
+  const order = {
+    cdate: now,
+    total: total,
+    status: 'PENDING',
+    customer: authCustomer,
+    items: items,
+  };
+
+  const result = await OrderDAO.insert(order);
+  res.json(result);
+});
+
+router.get('/orders/customer/:cid', JwtUtil.checkToken, async function (req, res) {
+  const _cid = req.params.cid;
+  const authCustomer = await CustomerDAO.selectByUsernameAndPassword(
+    req.decoded.username,
+    req.decoded.password,
+  );
+
+  if (!authCustomer || authCustomer._id.toString() !== _cid) {
+    res.json({
+      success: false,
+      message: 'Access denied',
+    });
+    return;
+  }
+
+  const orders = await OrderDAO.selectByCustID(_cid);
+  res.json(orders);
 });
 
 // category

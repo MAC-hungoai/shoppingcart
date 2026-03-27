@@ -7,14 +7,17 @@ class MyProvider extends Component {
 
     const token = this.readStoredToken();
     const customer = this.readStoredCustomer();
+    const mycart = this.readStoredMycart();
 
     this.state = {
       token: token,
       customer: customer,
+      mycart: mycart,
 
       // functions
       setToken: this.setToken,
       setCustomer: this.setCustomer,
+      setMycart: this.setMycart,
     };
   }
 
@@ -36,6 +39,16 @@ class MyProvider extends Component {
     }
   }
 
+  readStoredMycart() {
+    try {
+      const value = localStorage.getItem('mycart');
+      return value ? JSON.parse(value) : [];
+    } catch (err) {
+      localStorage.removeItem('mycart');
+      return [];
+    }
+  }
+
   setToken = (value) => {
     if (value) {
       localStorage.setItem('token', value);
@@ -54,6 +67,18 @@ class MyProvider extends Component {
     }
 
     this.setState({ customer: value });
+  };
+
+  setMycart = (value) => {
+    const mycart = Array.isArray(value) ? value : [];
+
+    if (mycart.length > 0) {
+      localStorage.setItem('mycart', JSON.stringify(mycart));
+    } else {
+      localStorage.removeItem('mycart');
+    }
+
+    this.setState({ mycart: mycart });
   };
 
   render() {

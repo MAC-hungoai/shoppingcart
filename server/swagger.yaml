@@ -1,33 +1,38 @@
 openapi: 3.0.0
 info:
-  title: 🛍️ Shopping Online API
-  description: API để quản lý và lấy dữ liệu sản phẩm bán hàng online
+  title: Shopping Online API
+  description: API documentation for the Shopping Online project.
   version: 1.0.0
   contact:
     name: Admin Team
 
 servers:
-  - url: http://localhost:3000
-    description: 🚀 Development Server
+  - url: http://127.0.0.1:3013
+    description: Development Server
 
 paths:
   /api/products:
     get:
-      summary: 📦 Lấy tất cả sản phẩm
-      description: Trả về danh sách tất cả các sản phẩm (không giới hạn)
+      summary: Get all products
+      description: Returns all products from the public product API.
       tags:
-        - 📦 Quản lý Sản phẩm (Admin)
+        - Public Products
       responses:
         '200':
-          description: ✅ Danh sách tất cả sản phẩm
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
         '500':
-          description: ❌ Lỗi server
-
+          description: Server error
     post:
-      summary: Thêm mới sản phẩm
-      description: Tạo một sản phẩm mới trong cơ sở dữ liệu
+      summary: Create a product
+      description: Creates a new product in the public product API.
       tags:
-        - Products
+        - Public Products
       requestBody:
         required: true
         content:
@@ -36,27 +41,27 @@ paths:
               $ref: '#/components/schemas/ProductInput'
       responses:
         '201':
-          description: Sản phẩm được tạo thành công
+          description: Product created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
         '400':
-          description: Dữ liệu không hợp lệ
+          description: Invalid request body
         '500':
-          description: Lỗi server
+          description: Server error
 
   /api/products/{id}:
     put:
-      summary: Cập nhật sản phẩm
-      description: Cập nhật thông tin của một sản phẩm hiện có
+      summary: Update a product
+      description: Updates a product in the public product API.
       tags:
-        - Products
+        - Public Products
       parameters:
         - name: id
           in: path
           required: true
-          description: ID của sản phẩm cần cập nhật
+          description: Product id
           schema:
             type: string
       requestBody:
@@ -67,32 +72,30 @@ paths:
               $ref: '#/components/schemas/ProductInput'
       responses:
         '200':
-          description: Sản phẩm được cập nhật thành công
+          description: Product updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
-        '400':
-          description: Dữ liệu không hợp lệ
         '404':
-          description: Sản phẩm không tìm thấy
+          description: Product not found
         '500':
-          description: Lỗi server
+          description: Server error
     delete:
-      summary: Xóa sản phẩm
-      description: Xóa một sản phẩm khỏi cơ sở dữ liệu theo ID
+      summary: Delete a product
+      description: Deletes a product in the public product API.
       tags:
-        - Products
+        - Public Products
       parameters:
         - name: id
           in: path
           required: true
-          description: ID của sản phẩm cần xóa (MongoDB ObjectId)
+          description: Product id
           schema:
             type: string
       responses:
         '200':
-          description: Sản phẩm được xóa thành công
+          description: Product deleted successfully
           content:
             application/json:
               schema:
@@ -103,133 +106,451 @@ paths:
                   product:
                     $ref: '#/components/schemas/Product'
         '404':
-          description: Sản phẩm không tìm thấy
+          description: Product not found
         '500':
-          description: Lỗi server
+          description: Server error
 
-  /api/customer/categories:
-    get:
-      summary: 🏷️ Lấy danh sách danh mục
-      description: Trả về danh sách tất cả các danh mục sản phẩm
+  /api/admin/login:
+    post:
+      summary: Admin login
+      description: Authenticates an admin account and returns a JWT token.
       tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
+        - Admin Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginInput'
       responses:
         '200':
-          description: ✅ Danh sách danh mục
+          description: Login result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginResponse'
         '500':
-          description: ❌ Lỗi server
+          description: Server error
 
-  /api/customer/products/new:
+  /api/admin/orders:
     get:
-      summary: ⭐ Lấy 3 sản phẩm mới nhất
-      description: Trả về danh sách 3 sản phẩm mới nhất được tạo
+      summary: Get all orders
+      description: Returns all orders sorted by creation date in descending order.
       tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
+        - Admin Orders
+      parameters:
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
       responses:
         '200':
-          description: ✅ Danh sách sản phẩm mới nhất
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          description: Missing or invalid admin token
         '500':
-          description: ❌ Lỗi server
+          description: Server error
 
-  /api/customer/products/hot:
+  /api/admin/orders/customer/{cid}:
     get:
-      summary: 🔥 Lấy 3 sản phẩm bán chạy nhất
-      description: Trả về danh sách 3 sản phẩm bán chạy nhất dựa trên số lượng đã bán
+      summary: Get orders by customer id
+      description: Returns all orders for a specific customer.
       tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
-      responses:
-        '200':
-          description: ✅ Danh sách sản phẩm bán chạy
-        '500':
-          description: ❌ Lỗi server
-
-  /api/customer/products/category/{cid}:
-    get:
-      summary: 📂 Lấy sản phẩm theo danh mục
-      description: Trả về danh sách sản phẩm thuộc một danh mục cụ thể
-      tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
+        - Admin Customers
       parameters:
         - name: cid
           in: path
           required: true
-          description: ID của danh mục (Category ID)
+          description: Customer id
           schema:
             type: string
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
       responses:
         '200':
-          description: ✅ Danh sách sản phẩm theo danh mục
+          description: List of orders for the customer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          description: Missing or invalid admin token
         '500':
-          description: ❌ Lỗi server
+          description: Server error
 
-  /api/customer/products/search/{keyword}:
-    get:
-      summary: 🔍 Tìm kiếm sản phẩm
-      description: Tìm kiếm sản phẩm theo từ khóa (tên sản phẩm)
+  /api/admin/orders/status/{id}:
+    put:
+      summary: Update order status
+      description: Updates the status of an order by id.
       tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
-      parameters:
-        - name: keyword
-          in: path
-          required: true
-          description: Từ khóa tìm kiếm
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ✅ Danh sách sản phẩm tìm được
-        '500':
-          description: ❌ Lỗi server
-
-  /api/customer/products/{id}:
-    get:
-      tags:
-        - 👥 Lấy dữ liệu (Khách hàng)
-      summary: Lấy sản phẩm theo ID
-      description: API để lấy thông tin chi tiết của một sản phẩm dựa trên ID.
-      operationId: getProductById
+        - Admin Orders
       parameters:
         - name: id
           in: path
           required: true
-          description: ID của sản phẩm cần lấy thông tin.
+          description: Order id
+          schema:
+            type: string
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusInput'
+      responses:
+        '200':
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Missing or invalid admin token
+        '500':
+          description: Server error
+
+  /api/admin/customers:
+    get:
+      summary: Get all customers
+      description: Returns all customers for the admin customer screen.
+      tags:
+        - Admin Customers
+      parameters:
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerSummary'
+        '401':
+          description: Missing or invalid admin token
+        '500':
+          description: Server error
+
+  /api/admin/customers/deactive/{id}:
+    put:
+      summary: Deactivate a customer
+      description: Sets the specified customer to inactive using the customer's token.
+      tags:
+        - Admin Customers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Customer id
+          schema:
+            type: string
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDeactivateInput'
+      responses:
+        '200':
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSummary'
+        '401':
+          description: Missing or invalid admin token
+        '500':
+          description: Server error
+
+  /api/admin/customers/sendmail/{id}:
+    get:
+      summary: Send activation email to a customer
+      description: Sends the signup verification email again to the specified customer.
+      tags:
+        - Admin Customers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Customer id
+          schema:
+            type: string
+        - $ref: '#/components/parameters/XAccessToken'
+      security:
+        - AdminTokenAuth: []
+      responses:
+        '200':
+          description: Email sending result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendEmailResponse'
+        '401':
+          description: Missing or invalid admin token
+        '500':
+          description: Server error
+
+  /api/customer/categories:
+    get:
+      summary: Get categories
+      description: Returns all product categories.
+      tags:
+        - Customer Data
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorySummary'
+        '500':
+          description: Server error
+
+  /api/customer/products/new:
+    get:
+      summary: Get newest products
+      description: Returns the 3 newest products.
+      tags:
+        - Customer Data
+      responses:
+        '200':
+          description: List of newest products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Server error
+
+  /api/customer/products/hot:
+    get:
+      summary: Get hottest products
+      description: Returns the 3 hottest approved products.
+      tags:
+        - Customer Data
+      responses:
+        '200':
+          description: List of hottest products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Server error
+
+  /api/customer/products/category/{cid}:
+    get:
+      summary: Get products by category
+      description: Returns all products in the specified category.
+      tags:
+        - Customer Data
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          description: Category id
           schema:
             type: string
       responses:
         '200':
-          description: Thông tin chi tiết của sản phẩm.
-        '404':
-          description: Không tìm thấy sản phẩm.
+          description: List of products in the category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
         '500':
-          description: Lỗi máy chủ.
+          description: Server error
+
+  /api/customer/products/search/{keyword}:
+    get:
+      summary: Search products
+      description: Searches products by keyword.
+      tags:
+        - Customer Data
+      parameters:
+        - name: keyword
+          in: path
+          required: true
+          description: Search keyword
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Server error
+
+  /api/customer/products/{id}:
+    get:
+      summary: Get product by id
+      description: Returns product details by id.
+      tags:
+        - Customer Data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+        '500':
+          description: Server error
 
 components:
+  securitySchemes:
+    AdminTokenAuth:
+      type: apiKey
+      in: header
+      name: x-access-token
+  parameters:
+    XAccessToken:
+      name: x-access-token
+      in: header
+      required: true
+      description: Admin JWT token returned by POST /api/admin/login
+      schema:
+        type: string
   schemas:
-    Product:
+    AdminLoginInput:
       type: object
       required:
-        - id
-        - name
-        - description
-        - price
-        - imageUrl
+        - username
+        - password
       properties:
-        id:
+        username:
           type: string
-          description: ID sản phẩm (MongoDB ObjectId)
+          example: thanh
+        password:
+          type: string
+          example: '123'
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        token:
+          type: string
+
+    CategorySummary:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Category id
         name:
           type: string
-          description: Tên sản phẩm
+          description: Category name
+
+    CustomerSummary:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Customer id
+        username:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        active:
+          type: number
+        token:
+          type: string
+
+    CustomerDeactivateInput:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Customer token used to deactivate the account
+
+    SendEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        preview:
+          type: object
+          properties:
+            email:
+              type: string
+            id:
+              type: string
+            token:
+              type: string
+            note:
+              type: string
+
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Product id
+        name:
+          type: string
         description:
           type: string
-          description: Mô tả sản phẩm
         price:
           type: number
-          description: Giá sản phẩm (VNĐ)
         imageUrl:
           type: string
-          format: uri
-          description: URL ảnh sản phẩm
+        cdate:
+          type: number
+          description: Product created time in milliseconds
+        category:
+          $ref: '#/components/schemas/CategorySummary'
 
     ProductInput:
       type: object
@@ -241,20 +562,62 @@ components:
       properties:
         name:
           type: string
-          description: Tên sản phẩm
         description:
           type: string
-          description: Mô tả sản phẩm
         price:
           type: number
-          description: Giá sản phẩm (VNĐ)
         imageUrl:
           type: string
           format: uri
-          description: URL ảnh sản phẩm
+
+    OrderItem:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type: number
+
+    Order:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Order id
+        cdate:
+          type: number
+          description: Order created time in milliseconds
+        total:
+          type: number
+        status:
+          type: string
+        customer:
+          $ref: '#/components/schemas/CustomerSummary'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+
+    OrderStatusInput:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - CANCELED
 
 tags:
-  - name: 👥 Lấy dữ liệu (Khách hàng)
-    description: API để lấy danh mục, sản phẩm mới, sản phẩm bán chạy
-  - name: 📦 Quản lý Sản phẩm (Admin)
-    description: API CRUD - Tạo, lấy, sửa, xóa sản phẩm
+  - name: Public Products
+    description: Public CRUD endpoints defined in product routes.
+  - name: Customer Data
+    description: Customer-facing endpoints for categories and products.
+  - name: Admin Auth
+    description: Admin authentication endpoints.
+  - name: Admin Orders
+    description: Admin order management endpoints.
+  - name: Admin Customers
+    description: Admin customer list and customer order lookup endpoints.

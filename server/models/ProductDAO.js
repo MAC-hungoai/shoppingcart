@@ -69,7 +69,9 @@ const ProductDAO = {
     var products = [];
     for (const item of items) {
       const product = await ProductDAO.selectByID(item._id);
-      products.push(product);
+      if (product) {
+        products.push(product);
+      }
     }
     return products;
   },

@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npm install && (cd ../client-admin && npm install && npm run build) && (cd ../client-customer && npm install && npm run build)",
     "start": "node index.js",
-    "dev": "node --watch index.js",
+    "dev": "node index.js",
+    "dev:watch": "node --watch index.js",
+    "seed:orders": "node seedDemoOrders.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,7 +18,9 @@
   "dependencies": {
     "body-parser": "^2.2.2",
     "crypto": "^1.0.1",
+    "ejs": "^4.0.1",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.4",
     "nodemailer": "^7.0.12",

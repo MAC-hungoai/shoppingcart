@@ -8,6 +8,7 @@ class Inform extends Component {
   render() {
     const customer = this.context.customer;
     const hasLogin = this.context.token !== '' && customer !== null;
+    const noItems = this.context.mycart.length;
 
     return (
       <div className="border-bottom">
@@ -19,7 +20,7 @@ class Inform extends Component {
                 Logout
               </Link>{' '}
               | <Link to="/myprofile">My profile</Link> |{' '}
-              <Link to="">My orders</Link>
+              <Link to="/myorders">My orders</Link>
             </div>
           ) : (
             <div>
@@ -30,7 +31,7 @@ class Inform extends Component {
         </div>
 
         <div className="float-right">
-          <Link to="">My cart</Link> have <b>0</b> items
+          <Link to="/mycart">My cart</Link> have <b>{noItems}</b> items
         </div>
 
         <div className="float-clear" />
@@ -42,6 +43,7 @@ class Inform extends Component {
   lnkLogoutClick() {
     this.context.setToken('');
     this.context.setCustomer(null);
+    this.context.setMycart([]);
   }
 }
 
